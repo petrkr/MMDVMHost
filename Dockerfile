@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine as builder
 
 RUN apk add --update --no-cache \
     cmake \
@@ -11,11 +11,18 @@ RUN apk add --update --no-cache \
 
 ADD ./ /MMDVMHost
 WORKDIR /MMDVMHost
-RUN make \
-&& cp MMDVMHost /usr/local/bin
+RUN make
 
-VOLUME /MMDVMHost
+FROM alpine
+
+RUN apk add --update --no-cache libstdc++ libsamplerate && \
+    rm -rf /var/cache/apk/*
+
 WORKDIR /MMDVMHost
+
+COPY --from=builder /MMDVMHost/MMDVMHost /usr/local/bin/MMDVMHost
+ADD MMDVM.ini /MMDVMHost/MMDVM.ini
+
 
 CMD ["MMDVMHost", "/MMDVMHost/MMDVM.ini"]
 
